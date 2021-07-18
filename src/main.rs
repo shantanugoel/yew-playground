@@ -1,13 +1,10 @@
 use std::fmt;
 
-use chrono::{Duration, Local, TimeZone};
+use chrono::{Duration, TimeZone};
 use chrono_tz::{America::Los_Angeles, Asia::Kolkata};
 use csv::ReaderBuilder;
 use serde::Deserialize;
-use yew::{
-    prelude::*,
-    services::{console, ConsoleService},
-};
+use yew::{prelude::*, services::ConsoleService};
 
 enum Msg {
     AddOne,
@@ -43,6 +40,8 @@ impl Component for Model {
     type Properties = ();
 
     fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        // let data = String::from("City, Country, Timezone");
+        // let mut rdr = ReaderBuilder::new().from_reader(data.as_bytes());
         let data = include_str!("cities.csv");
         let mut rdr = ReaderBuilder::new().from_reader(data.as_bytes());
         let mut model = Self {
