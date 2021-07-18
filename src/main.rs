@@ -4,6 +4,7 @@ use chrono::{Duration, NaiveDate, TimeZone};
 use chrono_tz::{America::Los_Angeles, Asia::Kolkata};
 use csv::ReaderBuilder;
 use serde::Deserialize;
+use simsearch::SimSearch;
 use yew::{prelude::*, services::ConsoleService};
 
 enum Msg {
@@ -27,7 +28,6 @@ impl fmt::Display for TzData {
     }
 }
 
-#[derive(Debug, Clone)]
 struct Model {
     // `ComponentLink` is like a reference to a component.
     // It can be used to send messages to the component
@@ -35,6 +35,8 @@ struct Model {
     value: i64,
     ref_date: NaiveDate,
     tz_data: Vec<TzData>,
+    search_data: SimSearch<String>,
+    found_data: Vec<String>,
 }
 
 impl Component for Model {
@@ -45,12 +47,19 @@ impl Component for Model {
         // let data = String::from("City, Country, Timezone");
         // let mut rdr = ReaderBuilder::new().from_reader(data.as_bytes());
         let data = include_str!("cities.csv");
+        // let raw_data: Vec<String> = data.lines().into_iter().map(|s| s.to_string()).collect();
+        let mut search_data = SimSearch::new();
+        for line in data.lines() {
+            search_data.insert(line.to_string(), line);
+        }
         let mut rdr = ReaderBuilder::new().from_reader(data.as_bytes());
         let mut model = Self {
             link,
             value: 0,
             ref_date: NaiveDate::from_ymd(2021, 07, 18),
             tz_data: Vec::new(),
+            search_data: search_data,
+            found_data: Vec::new(),
         };
 
         for result in rdr.deserialize() {
@@ -79,6 +88,16 @@ impl Component for Model {
             }
             Msg::CityInput(x) => {
                 ConsoleService::log(x.value.as_ref());
+                self.found_data.clear();
+                let results: Vec<String> = self
+                    .search_data
+                    .search(x.value.as_ref())
+                    .iter()
+                    .take(5)
+                    .map(|s| s.clone())
+                    .collect();
+                self.found_data.extend(results);
+                ConsoleService::log(self.found_data.len().to_string().as_ref());
             }
         }
         true
@@ -125,6 +144,11 @@ impl Component for Model {
                 }
                 </table>
                 <input oninput=self.link.callback(|x| Msg::CityInput(x))/>
+                {
+                    for self.found_data.clone().into_iter().map(|s| {html!{
+                        <p> {s } </p>
+                    }})
+                }
             </div>
         }
     }
