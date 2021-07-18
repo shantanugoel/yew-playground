@@ -11,6 +11,8 @@ use yew::{
 
 enum Msg {
     AddOne,
+    DatePick(ChangeData),
+    StringData(String),
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
@@ -37,7 +39,7 @@ struct Model {
 }
 
 impl Component for Model {
-    type Message = ChangeData;
+    type Message = Msg;
     type Properties = ();
 
     fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
@@ -58,21 +60,20 @@ impl Component for Model {
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
-        // ConsoleService::log(msg.as_ref());
         match msg {
-            ChangeData::Files(x) => ConsoleService::log("file"),
-            ChangeData::Value(x) => ConsoleService::log(x.as_ref()),
-            ChangeData::Select(x) => ConsoleService::log("select"),
+            Msg::DatePick(x) => match x {
+                ChangeData::Files(_) => ConsoleService::log("file"),
+                ChangeData::Select(_) => ConsoleService::log("selec"),
+                ChangeData::Value(v) => ConsoleService::log(v.as_ref()),
+            },
+            Msg::StringData(x) => ConsoleService::log(x.as_ref()),
+            Msg::AddOne => {
+                self.value += 1;
+                // the value has changed so we need to
+                // re-render for it to appear on the page
+            }
         }
         true
-        // match msg {
-        //     Msg::AddOne => {
-        //         self.value += 1;
-        //         // the value has changed so we need to
-        //         // re-render for it to appear on the page
-        //         true
-        //     }
-        // }
     }
 
     fn change(&mut self, _props: Self::Properties) -> ShouldRender {
@@ -94,7 +95,7 @@ impl Component for Model {
                 <p>{ self.value } { self.tz_data.len()}</p>
                 <p>{ " Hello"}</p>
                 <p>{"Blr: "}{blr_time} {" MTV: "}{mtv_time}</p>
-                <input type="date" onchange=self.link.callback(|x| x)/>
+                <input type="date" onchange=self.link.callback(|x| Msg::DatePick(x))/>
                 <table>
                 <thead>
                 <tr>
