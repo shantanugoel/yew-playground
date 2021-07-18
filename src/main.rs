@@ -10,6 +10,7 @@ enum Msg {
     AddOne,
     DatePick(ChangeData),
     StringData(String),
+    CityInput(InputData),
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
@@ -76,6 +77,9 @@ impl Component for Model {
                 // the value has changed so we need to
                 // re-render for it to appear on the page
             }
+            Msg::CityInput(x) => {
+                ConsoleService::log(x.value.as_ref());
+            }
         }
         true
     }
@@ -120,6 +124,7 @@ impl Component for Model {
                         </tr>}})
                 }
                 </table>
+                <input oninput=self.link.callback(|x| Msg::CityInput(x))/>
             </div>
         }
     }
