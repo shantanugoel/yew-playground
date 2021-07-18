@@ -1,6 +1,6 @@
-use std::fmt;
+use std::{fmt, str::FromStr};
 
-use chrono::{Duration, TimeZone};
+use chrono::{Duration, NaiveDate, TimeZone};
 use chrono_tz::{America::Los_Angeles, Asia::Kolkata};
 use csv::ReaderBuilder;
 use serde::Deserialize;
@@ -32,6 +32,7 @@ struct Model {
     // It can be used to send messages to the component
     link: ComponentLink<Self>,
     value: i64,
+    ref_date: NaiveDate,
     tz_data: Vec<TzData>,
 }
 
@@ -47,6 +48,7 @@ impl Component for Model {
         let mut model = Self {
             link,
             value: 0,
+            ref_date: NaiveDate::from_ymd(2021, 07, 18),
             tz_data: Vec::new(),
         };
 
@@ -63,7 +65,10 @@ impl Component for Model {
             Msg::DatePick(x) => match x {
                 ChangeData::Files(_) => ConsoleService::log("file"),
                 ChangeData::Select(_) => ConsoleService::log("selec"),
-                ChangeData::Value(v) => ConsoleService::log(v.as_ref()),
+                ChangeData::Value(v) => {
+                    ConsoleService::log(v.as_ref());
+                    self.ref_date = NaiveDate::from_str(v.as_str()).unwrap();
+                }
             },
             Msg::StringData(x) => ConsoleService::log(x.as_ref()),
             Msg::AddOne => {
@@ -79,12 +84,17 @@ impl Component for Model {
         // Should only return "true" if new properties are different to
         // previously received properties.
         // This component has no properties so we will always return "false".
+        ConsoleService::log("Change");
         false
     }
 
     fn view(&self) -> Html {
         // let blr_time = Local::today().with_timezone(&Kolkata).and_hms(9, 0, 0);
-        let blr_time = Kolkata.ymd(2021, 7, 18).and_hms(9, 0, 0);
+        // let blr_time = Kolkata.ymd(2021, 7, 18).and_hms(9, 0, 0);
+        let blr_time = Kolkata
+            .from_local_date(&self.ref_date)
+            .unwrap()
+            .and_hms(9, 0, 0);
         let mtv_time = blr_time.with_timezone(&Los_Angeles);
         let range = 0..24;
         let cities = vec!["BLR", "MTV"];
@@ -105,8 +115,8 @@ impl Component for Model {
                 </thead>
                 {
                     for range.map(|x| {html! {<tr>
-                        <td> { {(blr_time + Duration::hours(x)).format("%l:%M %p %e %b %Y")} } </td>
-                        <td> { {(mtv_time + Duration::hours(x)).format("%l:%M %p %e %b %Y")} } </td>
+                        <td> { {(blr_time + Duration::hours(x)).format("%l:%M %p %e %b")} } </td>
+                        <td> { {(mtv_time + Duration::hours(x)).format("%l:%M %p %e %b")} } </td>
                         </tr>}})
                 }
                 </table>
